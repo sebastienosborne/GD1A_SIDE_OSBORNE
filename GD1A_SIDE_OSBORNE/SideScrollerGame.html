@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" /><title> Peak Mediocrity </title>
+        <script src="//cdn.jsdelivr.net/npm/phaser@3.51.0/dist/phaser.js">
+        </script>
+
+    <style type="text/css"> body 
+    
+        { margin: 0; }
+
+        #startMenu{
+            display: none;
+            font-size: 100px;
+            color:black;
+            padding-top: 230px;
+            padding-left:110px ;
+            position:absolute;
+            z-index:1
+        }
+
+        #endGame{
+            display: none;
+            font-size: 100px;
+            color: red;
+            padding-top: 230px;
+            padding-left:110px ;
+            position:absolute;
+            z-index:1
+        }
+
+
+        
+    </style>
+</head>
+    <body>
+        <script type="text/javascript">
+
+
+        var config = {
+            type: Phaser.AUTO,
+            width: 800, height: 600,
+            physics: {
+            default: 'arcade',
+            arcade: {
+            gravity: { y: 600 },
+            debug: false
+            }},
+            scene: {preload: preload, create: create, update: update }
+            };
+
+
+        new Phaser.Game(config);
+
+        function preload(){
+
+            this.load.image("Phaser_tuilesdejeu", "assets/rocks.png");
+            this.load.image("snow", "assets/snowball.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/rackets.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/weapon.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/snowblock.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/heart.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/portal.png");
+            this.load.image("background", "assets/background.png");
+            this.load.image("ground", "assets/platforme.png");
+            this.load.image("Phaser_tuilesdejeu", "assets/snowzone.png");
+
+           
+            this.load.tilemapTiledJSON("carte", "map.json");  
+
+
+            this.load.spritesheet('perso','assets/perso.png',
+            { frameWidth: 32, frameHeight: 48 });
+
+            this.load.spritesheet('HpBar','assets/bardevie.png',
+            { frameWidth: 320, frameHeight: 96 });
+
+            this.load.spritesheet('Mob','assets/mob.png',
+            { frameWidth: 64, frameHeight: 64 });
+
+        }
+        
+
+        var player;
+        var mob;
+        var cursors;
+        var manette
+        var chronoTexte;
+        var monTimer;
+        var chrono = 0;  
+        var chronoMinute = 0;
+        var lifePoints = 5;
+
+        var rackets;
+        var snowball;
+        var weapon;
+        var heart;
+        var ice;
+        var snow;
+
+        var spikes = false
+        gameOver = false 
+        
+
+
+        function create (){
+            
+            const levelMap = this.add.tilemap("map");
+
+             // importer TileSet 
+             const tileset = carteDuNiveau.addTilesetImage(
+                    "tuiles_de_jeu",
+                    "Phaser_tuilesdejeu"
+                    );                 
+
+
+            const plateformes = levelMap.createStaticLayer(
+                    "plateformes",
+                    tileset
+                    );
+
+            
+            // import layers
+            const background = carteDuNiveau.createStaticLayer(
+                    "background",
+                    tileset
+                    );
+            const décor_background = carteDuNiveau.createStaticLayer(
+                    "décor background",
+                    tileset
+                    );
+            const plateformes = carteDuNiveau.createStaticLayer(
+                    "plateformes",
+                    tileset
+                    );
+
+
+            this.add.image(400, 300, 'snowball');
+            this.add.image(400, 300, 'background');
+            platforms = this.physics.add.staticGroup();
+            platforms.create(600, 400, 'ground');
+            
+                       
+            player = this.physics.add.sprite(48,1200, 'perso')  
+            plateformes.setCollisionByProperty({ estSolide: true });       
+            this.physics.add.collider(player, plateformes);
+            
+            barrehp = this.add.sprite(100,50, 'HpBar').setScale(0.5)  
+            barrehp.setScrollFactor(0)
+
+            this.physics.world.setBounds(0, 0, 1600, 1600);
+            this.cameras.main.setBounds(0, 0, 1600, 1600);
+            this.cameras.main.startFollow(player);  
+
+            player.setCollideWorldBounds(true);
+        
+            this.anims.create({
+                key: 'left',
+                frames: this.anims.generateFrameNumbers('perso', {start:0,end:3}),
+                frameRate: 10,
+                repeat: -1
+            });
+            this.anims.create({
+                key: 'turn',
+                frames: [ { key: 'perso', frame: 4 } ],
+                frameRate: 20
+            });
+            this.anims.create({
+                key: 'right',
+                frames: this.anims.generateFrameNumbers('perso', {start:5,end:8}),
+                frameRate: 10,
+                repeat: -1
+            });
+
+    // Liste des choses dont je n'ai réussi ou que je n'ai pas eu le temps d'implimenter :
+            // Utiliser les flèches pour bouger le perso de droite, gauche, haut et bas.
+            
+            //snowball fonction = power up à collectioner et utiliser comme projectile
+
+            //rackets fonction = marcher à une vitesse normale sur la neige
+
+            // weapon = power up permettant de faire du dégats aux mobs
+
+            //mob animation et hitbox
+
+            // glass physics = joueur accélère
+
+            // snow physics = joueur ralenti
+
+
+
+            //chronomètre
+            monTimer = this.time.addEvent({
+                delay: 1000,
+                callback: timer,
+                callbackScope: this,
+                loop: true
+            });  
+            chronoText = this.add.text(20, 20, "Timer: 0:00", {
+                fontSize: "20px",
+                fill: "#FFFFFF" 
+            });
+            chronoText.setScrollFactor(0);  
+
+            //life points
+            coeurEcran = this.add.image(675, 75,'HpBar');
+            coeurEcran.setScrollFactor(0);  
+            hpTexte = this.add.text(700, 65,pointDeVie, {
+                fontSize: "20px",
+                fill: "#FFFFFF" 
+            });
+            hpTexte.setScrollFactor(0);
+
+
+            //  keyboard controls
+            cursors = this.input.keyboard.createCursorKeys();
+            this.keys = this.input.keyboard.addKeys({
+                q:  Phaser.Input.Keyboard.KeyCodes.Q,
+                d:  Phaser.Input.Keyboard.KeyCodes.D,
+                z:  Phaser.Input.Keyboard.KeyCodes.Z,
+            });
+        }
+        
+            // controller controls
+
+        
+
+        function update(){
+            
+            if (gameOver){return;}    
+            
+
+                if ((cursors.up.isDown || this.keys.z.isDown) && player.body.blocked.down ) {
+                player.setVelocityY(-500);
+                }  
+                if (cursors.left.isDown || this.keys.q.isDown){ 
+                    player.setVelocityX(-150); 
+                    player.anims.play('left', true);
+                }
+                else if (cursors.right.isDown || this.keys.d.isDown){ 
+                    player.setVelocityX(150);
+                    player.anims.play('right', true);
+                }
+                else{ 
+                    player.setVelocityX(0); 
+                    player.anims.play('turn');
+                
+            }
+        }
+
+           function timer () {
+                
+                chrono += 1; 
+                if (chrono >= 60){
+                    chronoMinute += 1
+                    chrono = 0
+                }
+                if (chrono < 10){
+                        chronoText.setText("Timer: "+ chronoMinute + ":0"+ chrono );
+                }
+                else if (chrono<= 60){
+                    chronoText.setText("Timer: "+ chronoMinute + ":"+ chrono); 
+                }
+        }
+
+    
+            
+            function collectSnowball(player, snowballball){
+            bouteilleOxygène.disableBody(true, true); 
+           
+        }
+
+
+        
+            function endGame(player, damage){
+                life = 0
+                this.scene.restart();
+        }
+
+        
+        
+            function life(){
+                hpTexte.setText(pointDeVie); 
+        }
+
+        
+        
+            function collectWeapon(player,weapon){
+                weapon.disableBody(true, true); 
+        }
+
+
+
+        function collectSnowball(player, snowball){
+            star.disableBody(true, true); // boule de neige disparaît
+            spikes = this.physics.add.group();
+            this.physics.add.collider(spikes, platforms);
+            this.physics.add.collider(player, spikes, hitSpikes, null, this);
+            if (snowball.countActive(true) === 0){// si toutes les boules de neige sont prises
+            stars.children.iterate(function (child) {
+            child.enableBody(true, child.x, 0, true, true);
+            }); // on les affiche toutes de nouveau
+            var x = (player.x < 400) ? Phaser.Math.Between(400, 800) :
+            Phaser.Math.Between(0, 400);
+            }
+        }
+
+        function hitSpikes(player, spikes){
+            this.physics.pause();
+            player.setTint(0xff0000);
+            player.anims.play('turn');
+            gameOver = true;
+            endGame.style.display ="block"
+        }
+
+
+        </script>
+
+    <div id="startGame">START GAME</div>
+
+    <div id="endGame">GAME OVER</div>
+
+    </body>
+</html>
